@@ -70,7 +70,7 @@ void * handler(void * vargp){
                     goto SHUTDOWN;
                 }
                 else 
-                    printf("file read error\n");
+                    printf("(%ld)file read error\n",tid);
                 fclose(fp);
             }
         }
@@ -78,17 +78,17 @@ void * handler(void * vargp){
             goto FAILED;
     }
     if(msg_len ==0){
-        printf("Connect end.\n");
+        printf("(%ld)Connect end.\n",tid);
         goto SHUTDOWN;
     }
     else
         goto FAILED;
 NOTFOUND:
-    printf("NOTFOUND\n");
+    printf("(%ld)NOTFOUND\n",tid);
     write(fd,notfound,sizeof(notfound)-1);
     goto SHUTDOWN;
 FAILED:
-    printf("BADREQUEST\n");
+    printf("(%ld)BADREQUEST\n",tid);
     write(fd,badrequest,sizeof(badrequest)-1);
 SHUTDOWN:
     shutdown(fd, SHUT_WR); 

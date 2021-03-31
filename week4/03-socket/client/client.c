@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
     const char recv_path[] = "./client/";
     strcpy(send_buf,recv_path);
     strcpy(send_buf+sizeof(recv_path)-1,url);
-    printf("sendbuf %s\n",send_buf);
+    printf("save to: %s\n",send_buf);
     FILE* fp = fopen(send_buf,"wb");
     if(fp==NULL){
         printf("fopen error\n");
