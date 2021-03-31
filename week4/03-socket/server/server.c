@@ -127,7 +127,7 @@ int main(int argc, const char *argv[])
     printf("bind done\n");
      
     // listen
-    listen(fd, MAXTHREADS+1);
+    listen(fd, MAXTHREADS+2);
     printf("waiting for incoming connections...\n");
 
     int clientlen = sizeof(struct sockaddr_in);

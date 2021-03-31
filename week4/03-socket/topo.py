@@ -39,8 +39,8 @@ if mode==1:
     h2.cmd('rm -f test*')
     str2 = h2.cmd('wget http://10.0.0.1:80/server/test1.html & wget http://10.0.0.1:80/server/test2.html & wget http://10.0.0.1:80/server/noexist.html')
 else:
-    h2.cmd('rm -f ./client/test*')
-    str2 = h2.cmd('./client/hclient http://10.0.0.1:80/server/test1.html & ./client/hclient http://10.0.0.1:80/server/test2.html')
+    h2.cmd('rm -f ./client/server/test*')
+    str2 = h2.cmd('./client/hclient http://10.0.0.1:80/server/test1.html & ./client/hclient http://10.0.0.1:80/server/test2.html & ./client/hclient http://10.0.0.1:80/server/noexist.html')
 
 time.sleep(1)
 print(str2)

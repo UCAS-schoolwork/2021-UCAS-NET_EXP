@@ -86,7 +86,10 @@ int main(int argc, char *argv[])
     }
     sp += 4;
     long filesz = len-(sp-recv_buf);
-    
+    if(filesz<=0) {
+        printf("get %s failed\n",url);
+        goto FAILED;
+    }
     const char recv_path[] = "./client/";
     strcpy(send_buf,recv_path);
     strcpy(send_buf+sizeof(recv_path)-1,url);
