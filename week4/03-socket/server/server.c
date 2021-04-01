@@ -37,7 +37,7 @@ void * handler(void * vargp){
     printf("connection accepted, tid is %ld\n",tid);
     
 	int msg_len = 0;
-    while ((msg_len = recv(fd, recv_buf, sizeof(recv_buf), 0)) > 0) {
+    if ((msg_len = recv(fd, recv_buf, sizeof(recv_buf), 0)) > 0) {
         char* sp = recv_buf;
         if(sp[0]=='G'&&sp[1]=='E'&&sp[2]=='T'&&sp[3]==' '){
             sp += 4;
@@ -59,19 +59,46 @@ void * handler(void * vargp){
                 long nCount = ftell(fp);
                 printf("(%ld)filesz:%ld\n",tid,nCount);
                 fseek(fp,0,SEEK_SET);
-                if(nCount>=sizeof(send_buf)-sizeof(ok)+1-4)
-                    goto FAILED;  
+
                 strcpy(send_buf,ok);
                 sp = myitoa(send_buf+sizeof(ok)-1,(unsigned)nCount);
                 *sp++ = '\r', *sp++ = '\n', *sp++ = '\r', *sp++ = '\n';
                 int headerlen = sp-send_buf;
-                if( fread(sp,1,sizeof(send_buf)-headerlen,fp)>0 ){
-                    write(fd, send_buf, nCount+headerlen);
+                int thislen;
+                if( (thislen=fread(sp,1,sizeof(send_buf)-headerlen,fp))>0 ){
+                    
+                    int wlen = 0;
+                    if((wlen = (write(fd, send_buf, thislen+headerlen)))<0) goto RERROR;
+                    //printf("thishead%d\n",thislen+headerlen);
+                    nCount += headerlen;
+                    nCount -= wlen;
+                    //if(wlen==0) goto SUCCESS;
+                    //if(wlen<thislen+headerlen) printf("(%ld)wlen:%d\n",tid,wlen);
+                    //else printf("(%ld)thislen:%d\n",tid,thislen);
+          
+                    while(nCount>0){
+                        thislen=fread(send_buf,1,sizeof(send_buf),fp);
+                        if(thislen<0) goto RERROR;
+                        
+                        nCount -= thislen; 
+                        while(thislen>0){
+                            if((wlen = write(fd, send_buf, thislen))<0) goto RERROR;
+                            //if(wlen<thislen)
+                                //printf("wlen:%d\n",wlen);
+                            //else printf("thislen:%d\n",thislen);
+                            thislen -= wlen;                     
+                        }    
+                    }
+                }
+                else {
+            RERROR:
+                    printf("(%ld)file read error\n",tid);
+                    fclose(fp);
                     goto SHUTDOWN;
                 }
-                else 
-                    printf("(%ld)file read error\n",tid);
+            SUCCESS:
                 fclose(fp);
+                goto SHUTDOWN;
             }
         }
         else 
@@ -84,15 +111,17 @@ void * handler(void * vargp){
     else
         goto FAILED;
 NOTFOUND:
-    printf("(%ld)NOTFOUND\n",tid);
-    write(fd,notfound,sizeof(notfound)-1);
+    printf("(%ld)(%d)NOTFOUND\n",tid,fd);
+    int nflen = write(fd,notfound,sizeof(notfound)-1);
+    //printf("nflen:%d\n",nflen);
     goto SHUTDOWN;
 FAILED:
     printf("(%ld)BADREQUEST\n",tid);
     write(fd,badrequest,sizeof(badrequest)-1);
 SHUTDOWN:
-    shutdown(fd, SHUT_WR); 
-    recv(fd, recv_buf,sizeof(recv_buf), 0); 
+    //shutdown(fd, SHUT_WR); 
+    printf("(%ld)SHUTDOWN\n",tid);
+    //recv(fd, send_buf,sizeof(recv_buf), 0); 
     close(fd);
     threads++;
     return NULL;
