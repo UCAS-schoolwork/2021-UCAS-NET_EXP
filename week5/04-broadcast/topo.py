@@ -41,12 +41,15 @@ class BroadcastTopo(Topo):
     def build(self):
         h1 = self.addHost('h1')
         h2 = self.addHost('h2')
-        h3 = self.addHost('h3')
         b1 = self.addHost('b1')
+        b2 = self.addHost('b2')
+        b3 = self.addHost('b3')
 
-        self.addLink(h1, b1, bw=20)
-        self.addLink(h2, b1, bw=10)
-        self.addLink(h3, b1, bw=10)
+        self.addLink(h1, b1, bw=10)
+        self.addLink(h2, b2, bw=10)
+        self.addLink(b2, b1, bw=10)
+        self.addLink(b3, b1, bw=10)
+        self.addLink(b2, b3, bw=10)
 
 if __name__ == '__main__':
     check_scripts()
@@ -54,54 +57,40 @@ if __name__ == '__main__':
     topo = BroadcastTopo()
     net = Mininet(topo = topo, link = TCLink, controller = None) 
 
-    h1, h2, h3, b1 = net.get('h1', 'h2', 'h3', 'b1')
+    h1, h2, b1, b2, b3 = net.get('h1', 'h2','b1', 'b2', 'b3')
     
     h1.cmd('ifconfig h1-eth0 10.0.0.1/8')
     h2.cmd('ifconfig h2-eth0 10.0.0.2/8')
-    h3.cmd('ifconfig h3-eth0 10.0.0.3/8')
-    
-    clearIP(b1)
 
-    for h in [ h1, h2, h3, b1 ]:
+    clearIP(b1)
+    clearIP(b3)
+    clearIP(b2)
+
+    for h in [ h1, h2, b1, b2, b3]:
         h.cmd('./scripts/disable_offloading.sh')
         h.cmd('./scripts/disable_ipv6.sh')
 
     net.start()
     hub = './hub'
+    h1.cmd('wireshark &')
+    time.sleep(6)
+    '''
     print(b1.cmd(hub+' &'))
+    print(b2.cmd(hub+' &'))
+    print(b3.cmd(hub+' &'))
     
-    mode = 2
     
-    if mode==1:
-        print('test h1')
-        print(h1.cmd('ping -c 4 10.0.0.2'))
-        print(h1.cmd('ping -c 4 10.0.0.3'))
-        print('test h2')
-        print(h2.cmd('ping -c 4 10.0.0.1'))
-        print(h2.cmd('ping -c 4 10.0.0.3'))
-        print('test h3')
-        print(h3.cmd('ping -c 4 10.0.0.1'))
-        print(h3.cmd('ping -c 4 10.0.0.2'))
-    elif mode==2:
-        print(h1.cmd('iperf -s > out1 &'))
-        print(h2.cmd('iperf -c 10.0.0.1 -t 30 &'))
-        print(h3.cmd('iperf -c 10.0.0.1 -t 30'))
+    
+    print(h1.cmd('ping -c 1 10.0.0.2'))
+    
+    
+    '''
 
-        print('test h1 to h2 and h3:')
-        print(h2.cmd('iperf > out2 -s &'))
-        print(h3.cmd('iperf > out3 -s &'))
-        print(h1.cmd('iperf -c 10.0.0.2 -t 30 & iperf -c 10.0.0.3 -t 30'))
-
-    
+    CLI(net)
     raw_input('done.')
-    
-    if mode==2:
-        print('test h2 h3 to h1:')
-        os.system('cat out1')
-        print('test h1 to h2 and h3:')
-        os.system('cat out2')
-        os.system('cat out3')
     b1.cmd('kill %'+hub)
+    b2.cmd('kill %'+hub)
+    b3.cmd('kill %'+hub)
     
-    #CLI(net)
+    
     net.stop()

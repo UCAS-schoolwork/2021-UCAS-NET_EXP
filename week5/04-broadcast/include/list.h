@@ -23,6 +23,7 @@ struct list_head {
 			&pos->member != (head); \
 			pos = q, q = list_entry(pos->member.next, typeof(*q), member))
 
+
 static inline void init_list_head(struct list_head *list)
 {
 	list->next = list->prev = list;
