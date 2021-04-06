@@ -68,7 +68,6 @@ int main(int argc, const char **argv)
 	}
 
 	init_ustack();
-
 	ustack_run();
 
 	return 0;
