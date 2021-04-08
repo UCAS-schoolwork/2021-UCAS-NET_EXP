@@ -9,7 +9,7 @@
 void handle_packet(iface_info_t *iface, char *packet, int len)
 {
 	broadcast_packet(iface, packet, len);
-	free(packet);
+	//free(packet);
 }
 
 void ustack_run()
@@ -52,8 +52,8 @@ void ustack_run()
 						log(ERROR, "malloc failed when receiving packet.");
 						continue;
 					}
-					memcpy(packet, buf, len);
-					handle_packet(iface, packet, len);
+					//memcpy(packet, buf, len);
+					handle_packet(iface, buf, len);
 				}
 			}
 		}
