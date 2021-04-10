@@ -88,12 +88,13 @@ if __name__ == '__main__':
         print(h3.cmd('iperf -c 10.0.0.1 -t 30'))
 
         print('test h1 to h2 and h3:')
-        print(h2.cmd('iperf > out2 -s &'))
         print(h3.cmd('iperf > out3 -s &'))
-        print(h1.cmd('iperf -c 10.0.0.2 -t 30 & iperf -c 10.0.0.3 -t 30'))
+        print(h2.cmd('iperf > out2 -s &'))
+        print(h1.cmd('iperf -c 10.0.0.3 -t 30 & iperf -c 10.0.0.2 -t 30'))
 
     
     raw_input('done.')
+    
     
     if mode==2:
         print('test h2 h3 to h1:')
