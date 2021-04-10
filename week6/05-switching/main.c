@@ -16,10 +16,17 @@
 void handle_packet(iface_info_t *iface, char *packet, int len)
 {
 	// TODO: implement the packet forwarding process here
-	fprintf(stdout, "TODO: implement the packet forwarding process here.\n");
+	// fprintf(stdout, "TODO: implement the packet forwarding process here.\n");
 
 	struct ether_header *eh = (struct ether_header *)packet;
-	log(DEBUG, "the dst mac address is " ETHER_STRING ".\n", ETHER_FMT(eh->ether_dhost));
+	// log(DEBUG, "the dst mac address is " ETHER_STRING ".\n", ETHER_FMT(eh->ether_dhost));
+
+	iface_info_t* dest = lookup_port(eh->ether_dhost);
+	if(dest == NULL)
+		broadcast_packet(iface, packet, len);
+	else 
+	    iface_send_packet(dest, packet, len);
+	insert_mac_port(eh->ether_shost, iface);
 
 	free(packet);
 }
@@ -82,7 +89,8 @@ int main(int argc, const char **argv)
 	}
 
 	init_ustack();
-
+	init_mac_port_table();
+	// log(DEBUG,"Finish init and run.\n");
 	ustack_run();
 
 	return 0;

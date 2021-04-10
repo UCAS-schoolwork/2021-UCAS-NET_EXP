@@ -8,7 +8,7 @@
 
 // the simplest hash functions, you can recreate the wheels as you wish
 
-static inline u8 hash8(char *buf, int len)
+static inline u8 hash8(u8 *buf, int len)
 {
 	u8 result = 0;
 	for (int i = 0; i < len; i++)

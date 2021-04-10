@@ -1,11 +1,11 @@
+
+
+all : test
 TARGET = switch
-
-all : $(TARGET)
-
 CC = gcc
 LD = gcc
 
-CFLAGS = -g -Wall -Iinclude
+CFLAGS = -g -Og -Wall -Iinclude
 LDFLAGS = 
 
 LIBS = -lpthread
@@ -19,9 +19,13 @@ $(OBJS) : %.o : %.c include/*.h
 
 $(TARGET): $(OBJS)
 	$(LD) $(LDFLAGS) $(OBJS) -o $(TARGET) $(LIBS) 
+	rm -f *.o
 
 clean:
 	rm -f *.o $(TARGET)
 
 tags: *.c include/*.h
 	ctags *.c include/*.h
+
+test: main.c broadcast.c device_internal.c mac.c
+	gcc -Iinclude/ -Og -g $^ -lpthread -o switch

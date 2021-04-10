@@ -54,9 +54,11 @@ if __name__ == '__main__':
     net = Mininet(topo = topo, link = TCLink, controller = None) 
 
     h1, h2, h3, s1 = net.get('h1', 'h2', 'h3', 's1')
+    
     h1.cmd('ifconfig h1-eth0 10.0.0.1/8')
     h2.cmd('ifconfig h2-eth0 10.0.0.2/8')
     h3.cmd('ifconfig h3-eth0 10.0.0.3/8')
+    
     clearIP(s1)
 
     for h in [ h1, h2, h3, s1 ]:
@@ -64,8 +66,51 @@ if __name__ == '__main__':
         h.cmd('./scripts/disable_ipv6.sh')
 
     net.start()
+    '''
+    hub = './switch'
+    print(s1.cmd(hub+' &'))
+    
+    mode = 2
+    
+    if mode==1:
+        print('test h1')
+        print(h1.cmd('ping -c 4 10.0.0.2'))
+        print(h1.cmd('ping -c 4 10.0.0.3'))
+        print('test h2')
+        print(h2.cmd('ping -c 4 10.0.0.1'))
+        print(h2.cmd('ping -c 4 10.0.0.3'))
+        print('test h3')
+        print(h3.cmd('ping -c 4 10.0.0.1'))
+        print(h3.cmd('ping -c 4 10.0.0.2'))
+    elif mode==2:
+        
+        print(h1.cmd('iperf -s > out1 &'))
+        print(h2.cmd('iperf -c 10.0.0.1 -t 30 &'))
+        print(h3.cmd('iperf -c 10.0.0.1 -t 30'))
+        
+        print('test h1 to h2 and h3:')
+        print(h3.cmd('iperf > out3 -s &'))
+        print(h2.cmd('iperf > out2 -s &'))
+        print(h1.cmd('iperf -c 10.0.0.3 -t 40 & iperf -c 10.0.0.2 -t 40'))
+
+    
+    raw_input('done.')
+    
+    
+    if mode==2:
+        print('test h2 h3 to h1:')
+        os.system('cat out1')
+        print('test h1 to h2 and h3:')
+        os.system('cat out2')
+        os.system('cat out3')
+    s1.cmd('kill %'+hub)
+    '''
+    CLI(net)
+    net.stop()
+    '''
     # s1.cmd('./switch-reference &')
     # h2.cmd('iperf -s &')
     # h3.cmd('iperf -s &')
     CLI(net)
     net.stop()
+    '''
