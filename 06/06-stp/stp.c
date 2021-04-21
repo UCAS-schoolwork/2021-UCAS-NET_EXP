@@ -63,6 +63,8 @@ static void stp_port_send_packet(stp_port_t *p, void *stp_msg, int msg_len)
 	memcpy(pkt + ETHER_HDR_SIZE + LLC_HDR_SIZE, stp_msg, msg_len);
 
 	iface_send_packet(p->iface, pkt, pkt_len);
+
+	free(pkt);
 }
 
 static void stp_port_send_config(stp_port_t *p)
@@ -105,7 +107,6 @@ static void stp_send_config(stp_t *stp)
 static void stp_handle_hello_timeout(void *arg)
 {
 	// log(DEBUG, "hello timer expired, now = %llx.", time_tick_now());
-
 	stp_t *stp = arg;
 	stp_send_config(stp);
 	stp_start_timer(&stp->hello_timer, time_tick_now());
@@ -125,24 +126,66 @@ void *stp_timer_routine(void *arg)
 {
 	while (true) {
 		long long int now = time_tick_now();
-
 		pthread_mutex_lock(&stp->lock);
-
 		stp_timer_run_once(now);
-
 		pthread_mutex_unlock(&stp->lock);
-
 		usleep(100);
 	}
 
 	return NULL;
 }
 
+#define COMPARE_RETURN(x,y) if((x)<(y)) return 1; else if((x)>(y)) return -1
+int compare_ports(stp_port_t *p1, stp_port_t *p2)
+{
+	COMPARE_RETURN(p1->designated_root,p2->designated_root);
+	COMPARE_RETURN(p1->designated_cost,p2->designated_cost);
+	COMPARE_RETURN(p1->designated_switch,p2->designated_switch);
+	COMPARE_RETURN(p1->designated_port,p2->designated_port);
+	return 0;
+}
+
 static void stp_handle_config_packet(stp_t *stp, stp_port_t *p,
 		struct stp_config *config)
 {
 	// TODO: handle config packet here
-	fprintf(stdout, "TODO: handle config packet here.\n");
+	//fprintf(stdout, "TODO: handle config packet here.\n");
+	stp_port_t tmp; 
+	stp_port_t *t = &tmp;
+	t->designated_root = ntohll(config->root_id);
+	t->designated_cost = ntohl(config->root_path_cost);
+	t->designated_switch = ntohll(config->switch_id);
+	t->designated_port = ntohs(config->port_id);
+	
+	if(compare_ports(t,p)>0) {
+	// means that p is a non-designated_port
+		log(INFO, "port %02d has changed to %04lx:%02d\n",p->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
+		p->designated_root = t->designated_root;
+		p->designated_cost = t->designated_cost;
+		p->designated_switch = t->designated_switch;
+		p->designated_port = t->designated_port;
+		 
+		if(stp->root_port==NULL || compare_ports(t,stp->root_port)>0){
+			stp->root_port = p;
+			stp->designated_root = t->designated_root;
+			stp->root_path_cost = t->designated_cost += p->path_cost;
+			t->designated_switch = stp->switch_id;
+			stp_port_t *s;
+			for(int i=0;i<stp->nports;i++){
+				s = &stp->ports[i];	
+				t->designated_port = s->port_id;
+				if(t!=p && compare_ports(t,s)>0){
+					log(INFO, "port %02d has changed to %04lx:%02d followed\n",s->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
+					s->designated_root = t->designated_root;
+					s->designated_cost = t->designated_cost;
+					s->designated_switch = t->designated_switch;
+					s->designated_port = t->designated_port;
+				}
+			}
+		}
+	}
+	// else the stp state stays the same
+
 }
 
 static void *stp_dump_state(void *arg)
@@ -251,8 +294,7 @@ void stp_port_handle_packet(stp_port_t *p, char *packet, int pkt_len)
 {
 	stp_t *stp = p->stp;
 
-	pthread_mutex_lock(&stp->lock);
-	
+	//pthread_mutex_lock(&stp->lock);
 	// protocol insanity check is omitted
 	struct stp_header *header = (struct stp_header *)(packet + ETHER_HDR_SIZE + LLC_HDR_SIZE);
 
@@ -266,5 +308,5 @@ void stp_port_handle_packet(stp_port_t *p, char *packet, int pkt_len)
 		log(ERROR, "received invalid STP packet.");
 	}
 
-	pthread_mutex_unlock(&stp->lock);
+	//pthread_mutex_unlock(&stp->lock);
 }

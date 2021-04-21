@@ -3,6 +3,7 @@
 #include "stp.h"
 #include "utils.h"
 #include "log.h"
+#include "mac.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,14 +12,32 @@
 void handle_packet(iface_info_t *iface, char *packet, int len)
 {
 	struct ether_header *eh = (struct ether_header *)packet;
-	if (memcmp(eh->ether_dhost, eth_stp_addr, sizeof(*eth_stp_addr))) {
+	stp_port_t *p = iface->port;
+	pthread_mutex_lock(&p->stp->lock);
+	
+	if (memcmp(eh->ether_dhost, eth_stp_addr, sizeof(*eth_stp_addr))!=0) {
 		// TODO: forward this packet, if this lab has merged with 05-switch.
-		fprintf(stdout, "TODO: received non-stp packet, forward it.\n");
-		return ;
+		// fprintf(stdout, "TODO: received non-stp packet, forward it.\n");
+		if(port_is_valid(p)){
+			log(INFO, "port %02d has recv\n",p->port_id & 0xFF);
+			log(INFO, "the dst mac address is " ETHER_STRING ".\n", ETHER_FMT(eh->ether_dhost));
+			//goto HERE;
+			struct ether_header *eh = (struct ether_header *)packet;
+			iface_info_t* dest = lookup_port(eh->ether_dhost);
+			if(dest == NULL)
+				broadcast_packet(iface, packet, len);
+			else {
+				log(INFO, "send from port %02d\n",dest->port->port_id & 0xFF);
+				iface_send_packet(dest, packet, len);
+			}
+			insert_mac_port(eh->ether_shost, iface);
+		}
 	}
-
-	stp_port_handle_packet(iface->port, packet, len);
-
+	else {
+		stp_port_handle_packet(p, packet, len);
+	}
+HERE:
+	pthread_mutex_unlock(&p->stp->lock);
 	free(packet);
 }
 
@@ -82,7 +101,7 @@ int main(int argc, const char **argv)
 	init_ustack();
 
 	stp_init(&instance->iface_list);
-
+	init_mac_port_table();
 	ustack_run();
 
 	return 0;

@@ -40,26 +40,30 @@ class RingTopo(Topo):
         b2 = self.addHost('b2')
         b3 = self.addHost('b3')
         b4 = self.addHost('b4')
-        h1 = self.addHost('h1')
-        h2 = self.addHost('h2')
+        b5 = self.addHost('b5')
+        b6 = self.addHost('b6')
+        b7 = self.addHost('b7')
 
         self.addLink(b1, b2)
         self.addLink(b1, b3)
+        self.addLink(b1, b4)
         self.addLink(b2, b4)
+        self.addLink(b2, b6)
         self.addLink(b3, b4)
-        self.addLink(h1, b1)
-        self.addLink(h2, b4)
+        self.addLink(b3, b5)
+        self.addLink(b4, b5)
+        self.addLink(b4, b6)
+        self.addLink(b4, b7)
+        self.addLink(b5, b7)
+        self.addLink(b6, b7)
 
 if __name__ == '__main__':
     check_scripts()
 
     topo = RingTopo()
     net = Mininet(topo = topo, controller = None) 
-    b1,h1,h2 = net.get('b1','h1','h2')
-    #b1.cmd('wireshark &')
-    #sleep(9)
 
-    for idx in range(4):
+    for idx in range(7):
         name = 'b' + str(idx+1)
         node = net.get(name)
         clearIP(node)
@@ -76,23 +80,15 @@ if __name__ == '__main__':
         node.cmd('./stp > %s-output.txt 2>&1 &' % name)
         #node.cmd('./stp-reference > %s-output.txt 2>&1 &' % name)
 
-    
-    h1.cmd('./scripts/disable_offloading.sh')
-    h1.cmd('./scripts/disable_ipv6.sh')
-    h2.cmd('./scripts/disable_offloading.sh')
-    h2.cmd('./scripts/disable_ipv6.sh')
-    
     net.start()
     sleep(30)
-    print(h1.cmd('ping -c 1 '+ h2.IP()))
-    sleep(2)
-    for idx in range(4):
+    for idx in range(7):
         name = 'b' + str(idx+1)
         node = net.get(name)
         node.cmd('pkill -SIGTERM stp')
 
     sleep(1)
-    os.system('./dump_output.sh 4')
-    #raw_input()
+    os.system('./dump_output.sh 7')
+
     #CLI(net)
     net.stop()

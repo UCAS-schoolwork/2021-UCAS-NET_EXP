@@ -1,16 +1,16 @@
 TARGET := stp
 
-all : $(TARGET)
+all : $(TARGET) clear
 
 CC = gcc
 LD = gcc
 
-CFLAGS = -g -Wall -Iinclude
+CFLAGS = -g  -Iinclude
 LDFLAGS = 
 
 LIBS = -lpthread
 
-SRCS = stp.c stp_timer.c main.c device_internal.c
+SRCS = stp.c stp_timer.c main.c device_internal.c mac.c broadcast.c
 
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
@@ -22,6 +22,9 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f *.o $(TARGET)
+
+clear:
+	rm -f *.o
 
 tags: *.c include/*.h
 	ctags *.c include/*.h
