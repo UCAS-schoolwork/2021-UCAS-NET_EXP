@@ -84,7 +84,7 @@ if __name__ == '__main__':
     
     net.start()
     sleep(30)
-    print(h1.cmd('ping -c 1 '+ h2.IP()))
+    print(h1.cmd('ping -c 2 '+ h2.IP()))
     sleep(2)
     for idx in range(4):
         name = 'b' + str(idx+1)

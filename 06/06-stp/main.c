@@ -19,16 +19,17 @@ void handle_packet(iface_info_t *iface, char *packet, int len)
 		// TODO: forward this packet, if this lab has merged with 05-switch.
 		// fprintf(stdout, "TODO: received non-stp packet, forward it.\n");
 		if(port_is_valid(p)){
-			log(INFO, "port %02d has recv\n",p->port_id & 0xFF);
-			log(INFO, "the dst mac address is " ETHER_STRING ".\n", ETHER_FMT(eh->ether_dhost));
-			//goto HERE;
+			log(DEBUG, "port %02d has recv\n",p->port_id & 0xFF);
+			//log(DEBUG, "the dst mac address is " ETHER_STRING ".\n", ETHER_FMT(eh->ether_dhost));
 			struct ether_header *eh = (struct ether_header *)packet;
 			iface_info_t* dest = lookup_port(eh->ether_dhost);
-			if(dest == NULL)
-				broadcast_packet(iface, packet, len);
-			else {
-				log(INFO, "send from port %02d\n",dest->port->port_id & 0xFF);
+			if(dest != NULL && port_is_valid(dest->port)){
+				log(DEBUG, "send from port %02d\n",dest->port->port_id & 0xFF);
 				iface_send_packet(dest, packet, len);
+			}	
+			else {
+				log(DEBUG, "broatcast.\n");
+				broadcast_packet(iface, packet, len);
 			}
 			insert_mac_port(eh->ether_shost, iface);
 		}
@@ -36,7 +37,6 @@ void handle_packet(iface_info_t *iface, char *packet, int len)
 	else {
 		stp_port_handle_packet(p, packet, len);
 	}
-HERE:
 	pthread_mutex_unlock(&p->stp->lock);
 	free(packet);
 }

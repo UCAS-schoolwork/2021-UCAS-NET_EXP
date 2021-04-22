@@ -15,7 +15,7 @@ void broadcast_packet(iface_info_t *iface, const char *packet, int len)
 	iface_info_t *iface_n = NULL;
 	list_for_each_entry(iface_n, &instance->iface_list, list) {
 		if (iface_n->fd != iface->fd && port_is_valid(iface_n->port)) {
-			log(INFO, "send from port %02d\n",iface_n->port->port_id & 0xFF);
+			log(DEBUG, "bsend from port %02d\n",iface_n->port->port_id & 0xFF);
 			iface_send_packet(iface_n, packet, len);
 		}
 			

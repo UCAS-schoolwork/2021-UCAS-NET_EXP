@@ -159,7 +159,7 @@ static void stp_handle_config_packet(stp_t *stp, stp_port_t *p,
 	
 	if(compare_ports(t,p)>0) {
 	// means that p is a non-designated_port
-		log(INFO, "port %02d has changed to %04lx:%02d\n",p->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
+		log(DEBUG, "port %02d conf has changed to %04lx:%02d\n",p->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
 		p->designated_root = t->designated_root;
 		p->designated_cost = t->designated_cost;
 		p->designated_switch = t->designated_switch;
@@ -175,7 +175,7 @@ static void stp_handle_config_packet(stp_t *stp, stp_port_t *p,
 				s = &stp->ports[i];	
 				t->designated_port = s->port_id;
 				if(t!=p && compare_ports(t,s)>0){
-					log(INFO, "port %02d has changed to %04lx:%02d followed\n",s->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
+					log(DEBUG, "port %02d has changed to %04lx:%02d followed\n",s->port_id & 0xFF,t->designated_switch& 0xFFFF,t->designated_port & 0xFF);
 					s->designated_root = t->designated_root;
 					s->designated_cost = t->designated_cost;
 					s->designated_switch = t->designated_switch;
