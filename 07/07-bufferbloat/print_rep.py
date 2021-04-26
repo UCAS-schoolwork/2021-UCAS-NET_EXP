@@ -1,0 +1,120 @@
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt  
+
+def read_cwnd(fname):
+    fn = fname + '/cwnd.txt'
+    with open(fn) as f:
+        list = [line.split(', ') for line in f]
+    list.pop()
+    x0 = float(list[0][0])
+    x = [float(line[0])-x0 for line in list]
+    y = [int(line[1].split('cwnd:')[1].split(' ')[0]) for line in list]
+    return (x,y)
+
+def read_qlen(fname):
+    fn = fname + '/qlen.txt'
+    with open(fn) as f:
+        list = [line for line in f]
+    list.pop()
+    list = [line.split(', ') for line in list]
+    x0 = float(list[0][0])
+    x = [float(line[0])-x0 for line in list]
+    y = [int(line[1]) for line in list]
+    return (x,y)
+
+def read_rtt(fname):
+    return read_iperf_rtt(fname)
+    '''
+    fn = fname + '/rtt.txt'
+    with open(fn) as f:
+        list = [line.split(', ') for line in f]
+    list.pop()
+    x0 = float(list[0][0])
+    x = [float(line[0])-x0 for line in list]
+    y = [float(line[1].split('time=')[1].split(' ')[0]) for line in list]
+    return (x,y)
+    '''
+def read_bw(fname):
+    fn = fname + '/iperf.txt'
+    x = []
+    y = []
+    with open(fn) as f:
+        nline=0
+        for line in f:
+            nline += 1
+            if nline<7 or nline%2==1:
+                continue
+            x.append(float(line.split('] ')[1].split('-')[0]))
+            y.append(float(line.split('Bytes  ')[1].split(' ')[0]))
+    return (x,y)
+
+def read_iperf_rtt(fname):
+    fn = fname + '/iperf.txt'
+    x = []
+    y = []
+    with open(fn) as f:
+        nline=0
+        for line in f:
+            nline += 1
+            if nline<7 or nline%2==1:
+                continue
+            x.append(float(line.split('] ')[1].split('-')[0]))
+            y.append(float(line.split('K/')[1].split(' us')[0])/1000000)
+    return (x,y)
+
+maxqlen = [5,50,100,200]
+colors = ['r','g','b','y','m']
+
+def draw_rep(yname):
+    y = []
+    for i in range(len(maxqlen)):
+        func_name = 'read_'+yname
+        y.append(eval(func_name)('qlen-'+str(maxqlen[i])))
+    plt.figure(dpi=300)
+    for i in range(len(maxqlen)):   
+        plt.plot(y[i][0],y[i][1],label='maxqlen=%d'%maxqlen[i],linewidth=1.1,color=colors[i])
+
+    plt.xlim(-5,65)
+    #plt.ylim(1,200)
+    plt.grid()
+    plt.xlabel('time(s)')
+    if yname == 'rtt':
+        plt.ylabel(yname+'(s)')
+    elif yname == 'bw':
+        plt.ylabel(yname+'(Mbps)')
+    else:
+        plt.ylabel(yname+'(packets)')
+    plt.legend(loc='upper right')
+    plt.savefig(yname+'.png')#,dpi=300)
+
+def draw_mit(namelist):
+    y = []
+    for i in namelist:
+        y.append(read_iperf_rtt(i))
+    
+    plt.figure(figsize=(12,5), dpi=300)
+    from brokenaxes import brokenaxes
+    bax = brokenaxes(xlims = ((0,300),),ylims=((0, 4), (9, 12)), hspace=.08, despine=False)
+    for i in range(len(namelist)):   
+        bax.plot(y[i][0],y[i][1],label='algo=%s'%namelist[i],linewidth=1.5,color=colors[i])
+
+    #plt.xlim(0,300)
+    #plt.ylim(1,200)
+    #bax.grid()
+    bax.set_xlabel('time(s)')
+    bax.set_ylabel('per-packet queue delay for dynamic bandwidth(s)')
+    bax.legend(loc='upper left')
+    plt.savefig('miti.png')#,dpi=300)
+    return
+
+draw_rep('bw')
+draw_rep('cwnd')
+draw_rep('qlen')
+draw_rep('rtt')
+
+
+'''
+algo = ['red','taildrop','codel']
+draw_mit(algo)
+'''

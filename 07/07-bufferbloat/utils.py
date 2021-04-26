@@ -32,7 +32,7 @@ def cwnd_monitor(net, fname):
             output = p.stdout.read()
             if output != '':
                 ofile.write('%f, %s' % (t, output))
-            sleep(0.01)
+            sleep(0.3)
 
 def start_cwnd_monitor(net, fname):
     print 'Start cwnd monitor ...'
@@ -56,7 +56,7 @@ def qlen_monitor(net, fname):
             matches = pat.findall(output)
             if matches and len(matches) > 1:
                 ofile.write('%f, %s\n' % (t, matches[1]))
-            sleep(0.01)
+            sleep(0.35)
 
 def start_qlen_monitor(net, fname):
     print 'Start queue monitor ...'
@@ -78,7 +78,7 @@ def rtt_monitor(net, fname):
             output = p.stdout.read()
             if output != '':
                 ofile.write('%f, %s' % (t, output))
-            sleep(0.1)
+            sleep(0.36)
 
 def start_rtt_monitor(net, fname):
     print 'Start rtt monitor ...'
@@ -90,11 +90,12 @@ def stop_rtt_monitor(monitor):
     print 'Stop rtt monitor ...'
     monitor.terminate()
 
-def start_iperf(net, duration):
+def start_iperf(net, duration,fname):
     h1, h2 = net.get('h1', 'h2')
     print 'Start iperf ...'
     server = h2.popen('iperf -s -w 16m')
-    client = h1.popen('iperf -c %s -t %d' % (h2.IP(), duration+ 5))
+    #client = h1.popen('iperf -c %s -t %d' % (h2.IP(), duration+ 5))
+    client = h1.cmd('iperf -c %s -t %d -i 0.18 > %s &' % (h2.IP(), duration+ 5,fname))
 
 def stop_iperf():
     print 'Kill iperf ...'

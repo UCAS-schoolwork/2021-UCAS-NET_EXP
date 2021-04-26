@@ -14,9 +14,10 @@ import os
 
 parser = ArgumentParser(description='Args for reproducing Bufferbloat')
 
-parser.add_argument('--maxq', '-q', type=int, help='Max buffer size of network interface in packets', required=True)
+parser.add_argument('--maxq', '-q', type=int, default = 10, help='Max buffer size of network interface in packets')#, required=True)
 
 args = parser.parse_args()
+
 
 class BBTopo(Topo):
     def build(self):
@@ -40,7 +41,7 @@ def reproduce_bufferbloat(net, duration=60):
     # monitoring the rtt between h1 and h2
     rmon = start_rtt_monitor(net, '%s/rtt.txt' % (dname))
 
-    start_iperf(net, duration)
+    start_iperf(net, duration,'%s/iperf.txt' % (dname))
     sleep(duration)
 
     stop_cwnd_monitor(cmon)
@@ -49,7 +50,7 @@ def reproduce_bufferbloat(net, duration=60):
 
     stop_iperf()
 
-if __name__ == '__main__':
+def test_maxq():
     # Linux uses CUBIC by default which doesn't have the sawtooth behaviour
     os.system('sysctl -w net.ipv4.tcp_congestion_control=reno')
     topo = BBTopo()
@@ -59,6 +60,11 @@ if __name__ == '__main__':
     net.start()
 
     # CLI(net)
-    reproduce_bufferbloat(net, 60)
+    reproduce_bufferbloat(net, 100)
 
     net.stop()
+
+if __name__ == '__main__':
+    for i in [5,50,100]:
+        args.maxq = i
+        test_maxq()

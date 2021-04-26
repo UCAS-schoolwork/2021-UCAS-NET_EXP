@@ -13,7 +13,7 @@ import os
 
 # available algo: taildrop, red, codel
 parser = ArgumentParser(description='Args for mitigating Bufferbloat')
-parser.add_argument('--algo', '-a', help='Queue discipline algorithm ', required=True)
+parser.add_argument('--algo', '-a', help='Queue discipline algorithm ')#, required=True)
 args = parser.parse_args()
 
 class BBTopo(Topo):
@@ -30,24 +30,29 @@ def mitigate_bufferbloat(net, duration=60):
     dname = args.algo
     if not os.path.exists(dname):
         os.makedirs(dname)
-
-    start_iperf(net, duration)
-    rmon = start_rtt_monitor(net, '%s/rtt.txt' % (dname))
-
+    
+    start_iperf(net, duration,'%s/iperf.txt' % (dname))
+    #rmon = start_rtt_monitor(net, '%s/rtt.txt' % (dname))
     dynamic_bw(net, duration)
 
-    stop_rtt_monitor(rmon)
+    #stop_rtt_monitor(rmon)
     stop_iperf()
 
-if __name__ == '__main__':
+def test_mit():
     os.system('sysctl -w net.ipv4.tcp_congestion_control=reno')
     topo = BBTopo()
     net = Mininet(topo=topo, link=TCLink, controller=None)
     config_ip(net)
 
     net.start()
-
-    # CLI(net)
-    mitigate_bufferbloat(net, 60)
-
+    mitigate_bufferbloat(net, 300)
     net.stop()
+    return
+
+args.algo = 'taildrop'
+test_mit()
+
+args.algo = 'red'
+test_mit()
+args.algo = 'codel'
+test_mit()
