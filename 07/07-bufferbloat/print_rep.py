@@ -25,16 +25,28 @@ def read_qlen(fname):
 
 def read_rtt(fname):
     return read_iperf_rtt(fname)
-    '''
-    fn = fname + '/rtt.txt'
-    with open(fn) as f:
-        list = [line.split(', ') for line in f]
-    list.pop()
-    x0 = float(list[0][0])
-    x = [float(line[0])-x0 for line in list]
-    y = [float(line[1].split('time=')[1].split(' ')[0]) for line in list]
-    return (x,y)
-    '''
+
+def atof(str):
+    sum = 0.0
+    isrem = 0
+    first = True
+    for i in str:
+        if i == ' ' and first:
+            continue
+        first = False
+        add = ord(i) - ord('0')
+        if add>=0 and add<=9:
+            if isrem==0:
+                sum = sum*10 + add
+            else:
+                sum += add/isrem
+                isrem *= 10
+        elif i=='.' and isrem==0:
+            isrem = 10.0
+        else:
+            break
+    return sum
+
 def read_bw(fname):
     fn = fname + '/iperf.txt'
     x = []
@@ -46,7 +58,7 @@ def read_bw(fname):
             if nline<7 or nline%2==1:
                 continue
             x.append(float(line.split('] ')[1].split('-')[0]))
-            y.append(float(line.split('Bytes  ')[1].split(' ')[0]))
+            y.append(atof(line.split('Bytes  ')[1]))
     return (x,y)
 
 def read_iperf_rtt(fname):
@@ -62,6 +74,7 @@ def read_iperf_rtt(fname):
             x.append(float(line.split('] ')[1].split('-')[0]))
             y.append(float(line.split('K/')[1].split(' us')[0])/1000000)
     return (x,y)
+
 
 maxqlen = [5,50,100,200]
 colors = ['r','g','b','y','m']
@@ -91,16 +104,14 @@ def draw_rep(yname):
 def draw_mit(namelist):
     y = []
     for i in namelist:
-        y.append(read_iperf_rtt(i))
+        y.append(read_rtt(i))
     
     plt.figure(figsize=(12,5), dpi=300)
     from brokenaxes import brokenaxes
     bax = brokenaxes(xlims = ((0,300),),ylims=((0, 4), (9, 12)), hspace=.08, despine=False)
     for i in range(len(namelist)):   
-        bax.plot(y[i][0],y[i][1],label='algo=%s'%namelist[i],linewidth=1.5,color=colors[i])
+        bax.plot(y[i][0],y[i][1],label='algo=%s'%namelist[i],linewidth=1.2,color=colors[i])
 
-    #plt.xlim(0,300)
-    #plt.ylim(1,200)
     #bax.grid()
     bax.set_xlabel('time(s)')
     bax.set_ylabel('per-packet queue delay for dynamic bandwidth(s)')
@@ -114,7 +125,5 @@ draw_rep('qlen')
 draw_rep('rtt')
 
 
-'''
 algo = ['red','taildrop','codel']
 draw_mit(algo)
-'''
