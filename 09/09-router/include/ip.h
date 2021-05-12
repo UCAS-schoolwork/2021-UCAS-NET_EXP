@@ -38,6 +38,7 @@ struct iphdr {
 #define IP_BASE_HDR_SIZE sizeof(struct iphdr)
 #define IP_HDR_SIZE(hdr) (hdr->ihl * 4)
 #define IP_DATA(hdr)	((char *)hdr + IP_HDR_SIZE(hdr))
+#define IP_TOT_SIZE(hdr) ntohs((hdr)->tot_len)
 
 #define IP_FMT	"%hhu.%hhu.%hhu.%hhu"
 #define LE_IP_FMT_STR(ip) ((u8 *)&(ip))[3], \
@@ -76,5 +77,6 @@ static inline struct iphdr *packet_to_ip_hdr(const char *packet)
 void ip_init_hdr(struct iphdr *ip, u32 saddr, u32 daddr, u16 len, u8 proto);
 void handle_ip_packet(iface_info_t *iface, char *packet, int len);
 void ip_send_packet(char *packet, int len);
+void ip_forward_packet(iface_info_t *iface, char *packet, int len);
 
 #endif

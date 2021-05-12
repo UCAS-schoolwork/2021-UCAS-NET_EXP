@@ -1,4 +1,5 @@
 #include "ip.h"
+#include "icmp.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -10,5 +11,16 @@
 // packet.
 void handle_ip_packet(iface_info_t *iface, char *packet, int len)
 {
-	fprintf(stderr, "TODO: handle ip packet.\n");
+	// fprintf(stderr, "TODO: handle ip packet.\n");
+	struct iphdr *iph = packet_to_ip_hdr(packet);
+	if(ntohl(iph->daddr) == iface->ip){
+		if(iph->protocol == IPPROTO_ICMP) {
+			struct icmphdr *icph = (struct icmphdr*)(IP_DATA(iph));
+			if(icph->type == ICMP_ECHOREQUEST)
+				icmp_send_packet(iface,packet,len,ICMP_ECHOREPLY,0);
+		}
+		free(packet);
+	}
+	else 
+		ip_forward_packet(iface, packet, len);
 }

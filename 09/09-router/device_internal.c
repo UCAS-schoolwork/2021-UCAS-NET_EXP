@@ -20,7 +20,7 @@ iface_info_t *fd_to_iface(int fd)
 	return NULL;
 }
 
-void iface_send_packet(iface_info_t *iface, const char *packet, int len)
+void iface_send_packet(iface_info_t *iface, char *packet, int len)
 {
 	struct sockaddr_ll addr;
 	memset(&addr, 0, sizeof(struct sockaddr_ll));
@@ -35,9 +35,9 @@ void iface_send_packet(iface_info_t *iface, const char *packet, int len)
 				sizeof(struct sockaddr_ll)) < 0) {
 		perror("Send raw packet failed");
 	}
-
 	free(packet);
 }
+
 
 // open the interface to read all the necessary information
 int open_device(const char *dname)

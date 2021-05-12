@@ -1,6 +1,6 @@
 TARGET = router
 
-all: $(TARGET)
+all: $(TARGET) cleano
 
 CC = gcc
 LD = gcc
@@ -36,3 +36,6 @@ clean:
 
 tags: $(SRCS) $(HDRS)
 	ctags $(SRCS) $(HDRS)
+
+cleano:
+	rm -f *.o
