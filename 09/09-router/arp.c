@@ -15,6 +15,7 @@
 void arp_send_request(iface_info_t *iface, u32 dst_ip)
 {
 	//fprintf(stderr, "TODO: send arp request when lookup failed in arpcache.\n");
+	//fprintf(stderr, "arp req ip is %d.%d.%d.%d\n",*(char*)&dst_ip,*((char*)&dst_ip+1),*((char*)&dst_ip+2),*((char*)&dst_ip+3));
 	char *packet = (char *)malloc(ETHER_HDR_SIZE + sizeof(struct ether_arp));
 	struct ether_header *eh = (struct ether_header *)packet;
 	memcpy(eh->ether_shost, iface->mac, ETH_ALEN);
@@ -62,6 +63,9 @@ void handle_arp_packet(iface_info_t *iface, char *packet, int len)
 {
 	// fprintf(stderr, "TODO: process arp packet: arp request & arp reply.\n");
 	struct ether_arp *arp_pkt = packet_to_arp_hdr(packet);
+	//u32 dst_ip = ntohl(arp_pkt->arp_tpa);
+	//fprintf(stderr, "arp req ip is %d.%d.%d.%d\n",*(char*)&dst_ip,*((char*)&dst_ip+1),*((char*)&dst_ip+2),*((char*)&dst_ip+3));
+	
 	if(ntohs(arp_pkt->arp_op) == ARPOP_REPLY){
 		arpcache_insert(ntohl(arp_pkt->arp_spa), arp_pkt->arp_sha);
 	}
@@ -80,7 +84,7 @@ void handle_arp_packet(iface_info_t *iface, char *packet, int len)
 void iface_send_packet_by_arp(iface_info_t *iface, u32 dst_ip, char *packet, int len)
 {
 	struct ether_header *eh = (struct ether_header *)packet;
-	memcpy(eh->ether_shost, iface->mac, ETH_ALEN);
+	//memcpy(eh->ether_shost, iface->mac, ETH_ALEN);
 	eh->ether_type = htons(ETH_P_IP);
 
 	u8 dst_mac[ETH_ALEN];
@@ -88,6 +92,7 @@ void iface_send_packet_by_arp(iface_info_t *iface, u32 dst_ip, char *packet, int
 	if (found) {
 		// log(DEBUG, "found the mac of %x, send this packet", dst_ip);
 		memcpy(eh->ether_dhost, dst_mac, ETH_ALEN);
+		memcpy(eh->ether_shost, iface->mac, ETH_ALEN);
 		iface_send_packet(iface, packet, len);
 	}
 	else {

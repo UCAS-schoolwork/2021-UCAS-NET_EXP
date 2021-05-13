@@ -2,6 +2,7 @@
 #include "arp.h"
 #include "ether.h"
 #include "icmp.h"
+#include "base.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -75,6 +76,7 @@ int arpcache_lookup(u32 ip4, u8 mac[ETH_ALEN])
 void arpcache_append_packet(iface_info_t *iface, u32 ip4, char *packet, int len)
 {
 	// fprintf(stderr, "TODO: append the ip address if lookup failed, and send arp request if necessary.\n");
+	arp_send_request(iface,ip4);
 	pthread_mutex_lock(&arpcache.lock);
 	struct arp_req *entry = NULL, *q;
 	int found = 0;
@@ -97,7 +99,6 @@ void arpcache_append_packet(iface_info_t *iface, u32 ip4, char *packet, int len)
 	pkt->packet = packet;
 	list_add_tail(&pkt->list,&entry->cached_packets);
 
-	arp_send_request(iface,ip4);
 	entry->retries++;
 	entry->sent = time(NULL);
 	pthread_mutex_unlock(&arpcache.lock);
@@ -134,6 +135,7 @@ void arpcache_insert(u32 ip4, u8 mac[ETH_ALEN])
 			list_for_each_entry_safe(pkt, q1, &entry->cached_packets, list){
 				struct ether_header *eh = (struct ether_header *)pkt->packet;
 				memcpy(eh->ether_dhost, mac, ETH_ALEN);
+				memcpy(eh->ether_shost, entry->iface->mac, ETH_ALEN);
 				iface_send_packet(entry->iface, pkt->packet, pkt->len);
 				list_delete_entry(&pkt->list);
 				free(pkt);
@@ -168,10 +170,17 @@ void *arpcache_sweep(void *arg)
 		}
 		struct arp_req *entry = NULL, *q;
 		list_for_each_entry_safe(entry,q,&arpcache.req_list,list){
-			if(entry->retries>ARP_REQUEST_MAX_RETRIES){
+			if(entry->retries>=ARP_REQUEST_MAX_RETRIES){
 				struct cached_pkt *pkt = NULL, *q1;
 				list_for_each_entry_safe(pkt, q1, &entry->cached_packets, list){
-					icmp_send_packet(entry->iface,pkt->packet,pkt->len,ICMP_DEST_UNREACH,ICMP_HOST_UNREACH);
+					struct ether_header *eh = (struct ether_header *)pkt->packet;
+					u8 *mac = eh->ether_dhost;
+					iface_info_t *iface = NULL;
+					list_for_each_entry(iface, &instance->iface_list, list) {
+						if(memcmp(mac,iface->mac,ETH_ALEN)==0) 
+							break;
+					}
+					icmp_send_packet(iface,pkt->packet,pkt->len,ICMP_DEST_UNREACH,ICMP_HOST_UNREACH);
 					free(pkt->packet);
 					list_delete_entry(&pkt->list);
 					free(pkt);

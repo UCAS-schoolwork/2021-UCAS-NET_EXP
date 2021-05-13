@@ -3,6 +3,7 @@
 #include "rtable.h"
 #include "arp.h"
 #include "base.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +13,9 @@
 void icmp_send_packet(iface_info_t *iface, char *in_pkt, int len, u8 type, u8 code)
 {
 	// fprintf(stderr, "TODO: malloc and send icmp packet.\n");
+	#ifdef MYDEBUG
+		fprintf(stderr, "send icmp.\n");
+	#endif
 	struct ether_header *eh = (struct ether_header *)in_pkt;
 	struct iphdr *ihr = packet_to_ip_hdr(in_pkt);
 	int pkt_len = type==ICMP_ECHOREPLY ? len + IP_BASE_HDR_SIZE - IP_HDR_SIZE(ihr)
@@ -34,7 +38,7 @@ void icmp_send_packet(iface_info_t *iface, char *in_pkt, int len, u8 type, u8 co
 		memset(&n_ichr->u,0,sizeof(n_ichr->u));
 		memcpy((char*)n_ichr + ICMP_HDR_SIZE, in_pkt+ETHER_HDR_SIZE, IP_HDR_SIZE(ihr)+8);
 	}
-	icmp_checksum(n_ichr,pkt_len-(ETHER_HDR_SIZE + IP_BASE_HDR_SIZE));
+	n_ichr->checksum = icmp_checksum(n_ichr,pkt_len-(ETHER_HDR_SIZE + IP_BASE_HDR_SIZE));
 
 	struct iphdr *n_ihr = packet_to_ip_hdr(packet);
 	ip_init_hdr(n_ihr,iface->ip,ntohl(ihr->saddr),pkt_len-ETHER_HDR_SIZE,IPPROTO_ICMP);

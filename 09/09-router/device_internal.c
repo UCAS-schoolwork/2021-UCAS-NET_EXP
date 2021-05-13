@@ -20,15 +20,28 @@ iface_info_t *fd_to_iface(int fd)
 	return NULL;
 }
 
+#include "ip.h"
+#include "arp.h"
+void print_packet(iface_info_t *iface, char *packet, int len)
+{
+	struct ether_header *eh = (struct ether_header *)packet;
+	log(DEBUG, "send packet from %s, %d bytes, proto: 0x%04hx\n", 
+			iface->name, len, ntohs(eh->ether_type));
+}
+
 void iface_send_packet(iface_info_t *iface, char *packet, int len)
 {
+	#ifdef MYDEBUG
+	print_packet(iface,packet,len);
+	#endif
+	struct ether_header *eh = (struct ether_header *)packet;
 	struct sockaddr_ll addr;
 	memset(&addr, 0, sizeof(struct sockaddr_ll));
 	addr.sll_family = AF_PACKET;
 	addr.sll_ifindex = iface->index;
 	addr.sll_halen = ETH_ALEN;
 	addr.sll_protocol = htons(ETH_P_ARP);
-	struct ether_header *eh = (struct ether_header *)packet;
+
 	memcpy(addr.sll_addr, eh->ether_dhost, ETH_ALEN);
 
 	if (sendto(iface->fd, packet, len, 0, (const struct sockaddr *)&addr,

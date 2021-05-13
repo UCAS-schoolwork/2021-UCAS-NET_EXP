@@ -1,6 +1,8 @@
 #ifndef __LOG_H__
 #define __LOG_H__
 
+//#define MYDEBUG
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>

@@ -12,14 +12,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+
 // handle packet, hand the packet to handle_ip_packet or handle_arp_packet
 // according to ether_type
 void handle_packet(iface_info_t *iface, char *packet, int len)
 {
 	struct ether_header *eh = (struct ether_header *)packet;
-
-	// log(DEBUG, "got packet from %s, %d bytes, proto: 0x%04hx\n", 
-	// 		iface->name, len, ntohs(eh->ether_type));
+	#ifdef MYDEBUG
+	log(DEBUG, "got packet from %s, %d bytes, proto: 0x%04hx\n", iface->name, len, ntohs(eh->ether_type));
+	#endif
 	switch (ntohs(eh->ether_type)) {
 		case ETH_P_IP:
 			handle_ip_packet(iface, packet, len);
@@ -85,13 +86,22 @@ void ustack_run()
 	}
 }
 
+#include <signal.h>
+static void handle_signal(int signal)
+{
+	if (signal == SIGTERM) {
+		log(DEBUG, "received SIGTERM, terminate this program.");
+	}
+	exit(0);
+}
+
 int main(int argc, const char **argv)
 {
 	if (getuid() && geteuid()) {
 		printf("Permission denied, should be superuser!\n");
 		exit(1);
 	}
-
+	signal(SIGTERM, handle_signal);
 	init_ustack();
 
 	arpcache_init();

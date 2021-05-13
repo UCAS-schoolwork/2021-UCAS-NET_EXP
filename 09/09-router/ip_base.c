@@ -58,19 +58,18 @@ void ip_forward_packet(iface_info_t *iface, char *packet, int len)
 		free(packet);
 	}
 	else {
-		ip_checksum(ihr);
 		rt_entry_t *rt_entry = longest_prefix_match(daddr);
 		if(!rt_entry) {
 			icmp_send_packet(iface,packet,len,ICMP_DEST_UNREACH,ICMP_NET_UNREACH);
 			free(packet);
 		}
 		else{
+			ihr->checksum = ip_checksum(ihr);
 			u32 next_ip = daddr;
 			if(rt_entry->gw)
 				next_ip = rt_entry->gw;
 			iface_send_packet_by_arp(rt_entry->iface,next_ip,packet,len);
 		}
 	}
-	
 }
 

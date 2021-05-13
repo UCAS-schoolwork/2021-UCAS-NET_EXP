@@ -1,5 +1,6 @@
 #include "ip.h"
 #include "icmp.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,10 @@ void handle_ip_packet(iface_info_t *iface, char *packet, int len)
 		}
 		free(packet);
 	}
-	else 
+	else {
+		#ifdef MYDEBUG
+		fprintf(stderr, "forward.\n");
+		#endif
 		ip_forward_packet(iface, packet, len);
+	}
 }

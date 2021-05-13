@@ -3,7 +3,7 @@
 import os
 import sys
 import glob
-from time import sleep
+import time
 
 from mininet.topo import Topo
 from mininet.net import Mininet
@@ -33,13 +33,12 @@ def check_scripts():
 class RouterTopo(Topo):
     def build(self):
         h1 = self.addHost('h1')
-        h2 = self.addHost('h2')
-        h3 = self.addHost('h3')
         r1 = self.addHost('r1')
-
+        r2 = self.addHost('r2')
+        h2 = self.addHost('h2')
         self.addLink(h1, r1)
-        self.addLink(h2, r1)
-        self.addLink(h3, r1)
+        self.addLink(r1, r2)
+        self.addLink(r2, h2)
 
 if __name__ == '__main__':
     check_scripts()
@@ -47,36 +46,44 @@ if __name__ == '__main__':
     topo = RouterTopo()
     net = Mininet(topo = topo, controller = None) 
 
-    h1, h2, h3, r1 = net.get('h1', 'h2', 'h3', 'r1')
+    h1, h2, r2, r1 = net.get('h1', 'h2', 'r2', 'r1')
+    
     h1.cmd('ifconfig h1-eth0 10.0.1.11/24')
-    h2.cmd('ifconfig h2-eth0 10.0.2.22/24')
-    h3.cmd('ifconfig h3-eth0 10.0.3.33/24')
-
+    h2.cmd('ifconfig h2-eth0 10.0.3.33/24')
     h1.cmd('route add default gw 10.0.1.1')
-    h2.cmd('route add default gw 10.0.2.1')
-    h3.cmd('route add default gw 10.0.3.1')
-
+    h2.cmd('route add default gw 10.0.3.1')
     r1.cmd('ifconfig r1-eth0 10.0.1.1/24')
     r1.cmd('ifconfig r1-eth1 10.0.2.1/24')
-    r1.cmd('ifconfig r1-eth2 10.0.3.1/24')
+    r1.cmd('route add -net 10.0.3.0 netmask 255.255.255.0 gw 10.0.2.2 dev r1-eth1')
+    r2.cmd('ifconfig r2-eth0 10.0.2.2/24')
+    r2.cmd('ifconfig r2-eth1 10.0.3.1/24')
+    r2.cmd('route add -net 10.0.1.0 netmask 255.255.255.0 gw 10.0.2.1 dev r2-eth0')
 
-    for n in (h1, h2, h3, r1):
+    for n in (h1, h2, r2, r1):
         n.cmd('./scripts/disable_offloading.sh')
         n.cmd('./scripts/disable_ipv6.sh')
-
-    r1.cmd('./scripts/disable_arp.sh')
-    r1.cmd('./scripts/disable_icmp.sh')
-    r1.cmd('./scripts/disable_ip_forward.sh')
-    r1.cmd('./scripts/disable_ipv6.sh')
+    for r in (r1,r2):
+        r.cmd('./scripts/disable_arp.sh')
+        r.cmd('./scripts/disable_icmp.sh')
+        r.cmd('./scripts/disable_ip_forward.sh')
+        r.cmd('./scripts/disable_ipv6.sh')
 
     net.start()
-    r1.cmd('./router &')
-   
-    print(h1.cmd('ping -c 2 10.0.1.1'))
-    print(h1.cmd('ping -c 2 10.0.2.22'))
-    print(h1.cmd('ping -c 2 10.0.3.33'))
-    print(h1.cmd('ping -c 2 10.0.3.11'))
-    print(h1.cmd('ping -c 2 10.0.4.1'))
-  
+    #h1.cmd('wireshark &')
+    #h2.cmd('wireshark &')
+    
+    #time.sleep(9)
+    for r in (r1,r2):
+        r.cmd('./router > %s-output.txt 2>&1 &' % r)
+    #print(h2.cmd('iperf -s > iperf.txt &'))
+    #print(h1.cmd('iperf -c 10.0.3.33 -t 5'))
+
+    print(h1.cmd('ping -c 1 10.0.1.1'))
+    print(h1.cmd('ping -c 1 10.0.2.2'))
+    print(h1.cmd('ping -c 1 10.0.3.33'))
+    print(h1.cmd('traceroute 10.0.3.33'))
+    for r in (r1,r2):
+        r.cmd('pkill -SIGTERM router')
+    
     #CLI(net)
     net.stop()
