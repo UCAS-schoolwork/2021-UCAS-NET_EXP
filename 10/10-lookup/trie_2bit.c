@@ -2,7 +2,7 @@
 #include <sys/time.h>    
 #include <unistd.h>
 
-#define MAXN 1000000
+#define MAXN 950000
 #define MAXIP 700000
 
 typedef struct{
