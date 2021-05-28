@@ -87,13 +87,22 @@ void ustack_run()
 	}
 }
 
+#include <signal.h>
+static void handle_signal(int signal)
+{
+	if (signal == SIGTERM) {
+		log(DEBUG, "received SIGTERM, terminate this program.");
+	}
+	exit(0);
+}
+
 int main(int argc, const char **argv)
 {
 	if (getuid() && geteuid()) {
 		printf("Permission denied, should be superuser!\n");
 		exit(1);
 	}
-
+	signal(SIGTERM, handle_signal);
 	init_ustack();
 
 	arpcache_init();

@@ -3,7 +3,7 @@
 import os
 import sys
 import glob
-
+from time import sleep
 from mininet.topo import Topo
 from mininet.net import Mininet
 from mininet.cli import CLI
@@ -83,6 +83,21 @@ if __name__ == '__main__':
         r.cmd('./scripts/disable_ip_forward.sh')
         r.cmd('./scripts/disable_ipv6.sh')
 
+
     net.start()
-    CLI(net)
+
+    for r in (r1, r2, r3, r4):
+        r.cmd('./mospfd > %s-output.txt 2>&1 &' % r)
+        #r.cmd('./mospfd-reference > %s-output.txt 2>&1 &' % r)
+
+    sleep(38)
+
+    print(h1.cmd('traceroute 10.0.6.22'))
+    sleep(3)
+    for r in (r1, r2, r3, r4):
+        r.cmd('pkill -SIGTERM mospfd')
+        #r.cmd('pkill -SIGTERM mospfd-reference')
+
+    #raw_input('done\n')
+    #CLI(net)
     net.stop()
