@@ -2,7 +2,7 @@
 #define __HASH_H__
 
 #include "types.h"
-
+#define HASH_NAT 233
 #define HASH_8BITS 256
 #define HASH_16BITS 65536
 

@@ -77,7 +77,7 @@ void ustack_run()
 		}
 	}
 }
-
+int parse_config(const char *filename);
 int main(int argc, const char **argv)
 {
 	if (getuid() && geteuid()) {

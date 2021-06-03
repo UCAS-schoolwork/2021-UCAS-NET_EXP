@@ -47,7 +47,7 @@ struct nat_mapping {
 };
 
 struct nat_table {
-	struct list_head nat_mapping_list[HASH_8BITS];	// nat hash table
+	struct list_head nat_mapping_list[HASH_NAT];	// nat hash table
 
 	iface_info_t *internal_iface;		// pointer to internal interface
 	iface_info_t *external_iface;		// pointer to external interface

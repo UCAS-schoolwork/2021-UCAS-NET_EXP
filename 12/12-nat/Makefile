@@ -1,6 +1,6 @@
 TARGET = nat
 
-all: $(TARGET)
+all: $(TARGET) cleano
 
 CC = gcc
 LD = gcc
@@ -23,3 +23,6 @@ $(TARGET): $(LIBIP) $(OBJS)
 
 clean:
 	rm -f *.o $(TARGET)
+
+cleano:
+	rm *.o
