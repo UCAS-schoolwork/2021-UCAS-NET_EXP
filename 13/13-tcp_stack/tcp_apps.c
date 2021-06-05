@@ -33,6 +33,7 @@ void *tcp_server(void *arg)
 	sleep(5);
 
 	tcp_sock_close(csk);
+	log(DEBUG, "close.\n");
 	
 	return NULL;
 }
@@ -50,10 +51,9 @@ void *tcp_client(void *arg)
 				NET_IP_FMT_STR(skaddr->ip), ntohs(skaddr->port));
 		exit(1);
 	}
-
+	log(DEBUG, "connect success.\n");
 	sleep(1);
-
 	tcp_sock_close(tsk);
-
+	log(DEBUG, "close done.\n");
 	return NULL;
 }

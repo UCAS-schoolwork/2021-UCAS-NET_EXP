@@ -53,6 +53,26 @@ unlock:
 	return -(wait->dead);
 }
 
+static inline int sleep_with_lock(struct synch_wait *wait)
+{
+	wait->sleep = 1;
+	if (!wait->notified)
+		pthread_cond_wait(&wait->cond, &wait->lock);
+	wait->notified = 0;
+	wait->sleep = 0;
+	return 0;
+}
+
+static inline int wake_with_lock(struct synch_wait *wait)
+{
+	if (!wait->notified) {
+		wait->notified = 1;
+		if (wait->sleep)
+			pthread_cond_signal(&wait->cond);
+	}
+	return 0;
+}
+
 // notify others
 static inline int wake_up(struct synch_wait *wait)
 {

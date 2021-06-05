@@ -54,7 +54,14 @@ if __name__ == '__main__':
         h.cmd('scripts/disable_tcp_rst.sh')
         # XXX: If you want to run user-level stack, you should execute 
         # disable_[arp,icmp,ip_forward].sh first. 
+    '''
+    for h in (h1,h2):
+        h.cmd('scripts/disable_arp.sh')
+        h.cmd('scripts/disable_icmp.sh')
+        h.cmd('scripts/disable_ip_forward.sh')
+    '''
 
     net.start()
+    h1.cmd('wireshark &')
     CLI(net)
     net.stop()

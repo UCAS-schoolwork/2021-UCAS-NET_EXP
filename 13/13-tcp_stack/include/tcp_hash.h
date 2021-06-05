@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "list.h"
 #include "tcp_sock.h"
+#include <pthread.h>
 
 #define TCP_HASH_SIZE HASH_8BITS
 #define TCP_HASH_MASK (TCP_HASH_SIZE - 1)
@@ -13,6 +14,8 @@ struct tcp_hash_table {
 	struct list_head established_table[TCP_HASH_SIZE];
 	struct list_head listen_table[TCP_HASH_SIZE];
 	struct list_head bind_table[TCP_HASH_SIZE];
+	pthread_mutex_t tlock;
+	pthread_mutex_t bind_tlock;
 };
 
 // tcp hash function: if hashed into bind_table or listen_table, only use sport; 

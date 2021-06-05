@@ -42,8 +42,80 @@ static inline int is_tcp_seq_valid(struct tcp_sock *tsk, struct tcp_cb *cb)
 	}
 }
 
+static inline int update_tsk(struct tcp_sock *tsk, struct tcp_cb *cb)
+{
+	tsk->rcv_nxt = cb->seq_end;
+	tsk->snd_una = cb->ack;
+	return 0;
+}
 // Process the incoming packet according to TCP state machine. 
 void tcp_process(struct tcp_sock *tsk, struct tcp_cb *cb, char *packet)
 {
-	fprintf(stdout, "TODO: implement %s please.\n", __FUNCTION__);
+	//fprintf(stdout, "TODO: implement %s please.\n", __FUNCTION__);
+	// TODO: check if the packet is valid.
+	if(!tsk) return;
+	struct tcphdr *thr = packet_to_tcp_hdr(packet);
+	if(thr->flags & TCP_RST){
+		tsk->state = TCP_CLOSED;
+		tcp_unhash(tsk);
+		tcp_bind_unhash(tsk);
+	}
+	else if(tsk->state == TCP_LISTEN && thr->flags & TCP_SYN){
+		struct tcp_sock *csk = alloc_tcp_sock();
+		csk->sk_sip = cb->daddr;
+		csk->sk_sport = cb->dport;
+		csk->sk_dip = cb->saddr;
+		csk->sk_dport = cb->sport;
+		csk->rcv_nxt = cb->seq_end;
+		csk->parent = tsk;
+		csk->state = TCP_SYN_RECV;
+		pthread_mutex_lock(&tsk->wait_accept->lock);
+		tcp_sock_listen_enqueue(csk);
+		pthread_mutex_unlock(&tsk->wait_accept->lock);
+		tcp_hash(csk);
+		tcp_send_control_packet(csk,TCP_SYN|TCP_ACK);
+	}
+	else if(tsk->state == TCP_SYN_SENT && thr->flags & (TCP_ACK|TCP_SYN)){
+		update_tsk(tsk,cb);
+		tsk->state = TCP_ESTABLISHED;
+		tcp_send_control_packet(tsk,TCP_ACK);
+		wake_up(tsk->wait_connect);
+	}
+	else if(tsk->state == TCP_SYN_RECV && thr->flags & TCP_ACK){
+		struct tcp_sock *psk = tsk->parent;
+		pthread_mutex_lock(&psk->wait_accept->lock);
+		if(!tcp_sock_accept_queue_full(psk)){
+			tsk->state = TCP_ESTABLISHED;
+			update_tsk(tsk,cb);
+			tcp_sock_accept_enqueue(tsk);
+			wake_with_lock(psk->wait_accept);
+		}
+		pthread_mutex_unlock(&psk->wait_accept->lock);
+	}
+	else if(tsk->state == TCP_ESTABLISHED && thr->flags & TCP_FIN){
+		tsk->state = TCP_CLOSE_WAIT;
+		update_tsk(tsk,cb);
+		tcp_send_control_packet(tsk,TCP_ACK);
+		//usleep(100000);
+		//tcp_sock_close(tsk);
+	}
+	else if(tsk->state == TCP_FIN_WAIT_1 && thr->flags & TCP_ACK){
+		tsk->state = TCP_FIN_WAIT_2;
+		if(thr->flags & TCP_FIN)
+			tsk->state = TCP_TIME_WAIT;
+		update_tsk(tsk,cb);
+	}
+	else if(tsk->state == TCP_FIN_WAIT_2 && thr->flags & (TCP_FIN|TCP_ACK)){
+		tsk->state = TCP_TIME_WAIT;
+		update_tsk(tsk,cb);
+		tcp_send_control_packet(tsk,TCP_ACK);
+		tcp_set_timewait_timer(tsk);
+	}
+	else if(tsk->state == TCP_LAST_ACK && thr->flags & (TCP_ACK)){
+		tsk->state = TCP_CLOSED;
+		update_tsk(tsk,cb);
+		tcp_unhash(tsk);
+	}
+
+	return;
 }

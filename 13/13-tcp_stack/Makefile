@@ -1,5 +1,5 @@
 TARGET = tcp_stack
-all: $(TARGET)
+all: $(TARGET) cleano
 
 CC = gcc
 LD = gcc
@@ -24,3 +24,6 @@ $(TARGET): $(OBJS)
 
 clean:
 	rm -f *.o $(TARGET)
+
+cleano:
+	rm -f *.o

@@ -52,7 +52,6 @@ struct tcp_sock {
 	// parent tcp sock
 	struct list_head accept_queue;
 
-
 #define TCP_MAX_BACKLOG 128
 	// the number of pending tcp sock in accept_queue
 	int accept_backlog;
@@ -113,7 +112,7 @@ struct tcp_sock {
 };
 
 void tcp_set_state(struct tcp_sock *tsk, int state);
-
+void tcp_sock_listen_enqueue(struct tcp_sock *tsk);
 int tcp_sock_accept_queue_full(struct tcp_sock *tsk);
 void tcp_sock_accept_enqueue(struct tcp_sock *tsk);
 struct tcp_sock *tcp_sock_accept_dequeue(struct tcp_sock *tsk);
