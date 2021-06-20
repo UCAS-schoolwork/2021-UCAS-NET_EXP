@@ -22,7 +22,7 @@ def server(port):
 
     with open(wfname,'wb') as f:
         while True:
-            data = cs.recv(1600)
+            data = cs.recv(1400)
             if data:
                 f.write(data)
             else:

@@ -34,7 +34,7 @@ void *tcp_server(void *arg)
 
 	log(DEBUG, "accept a connection.");
 
-	char rbuf[1600];
+	char rbuf[1500];
 	int rlen = 0;
 	int tot = 0;
 	FILE* fp = fopen(wfname,"wb");
@@ -69,11 +69,9 @@ void *tcp_client(void *arg)
 	FILE* fp = fopen(rfname,"rb");
 	char wbuf[1400];
 	int rlen;
-	int i=0;
 	while((rlen=fread(wbuf,1,sizeof(wbuf),fp))>0){
 		tcp_sock_write(tsk,wbuf,rlen);
-		if(i++>100) break;
-		usleep(1000);
+		usleep(1200);
 	}
 	fclose(fp);
 	tcp_sock_close(tsk);

@@ -412,6 +412,5 @@ int tcp_sock_read(struct tcp_sock *tsk, char *buf, int len)
 	int readlen = read_ring_buffer(tsk->rcv_buf,buf,len);
 	tsk->rcv_wnd = ring_buffer_free(tsk->rcv_buf);
 	pthread_mutex_unlock(&tsk->wait_recv->lock);
-
 	return readlen;
 }

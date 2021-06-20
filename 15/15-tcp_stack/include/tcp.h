@@ -11,6 +11,8 @@
 #define less_than_32b(a, b) (((int32_t)(a)-(int32_t)(b)) < 0)
 #define greater_or_equal_32b(a, b) (((int32_t)(a)-(int32_t)(b)) >= 0)
 #define greater_than_32b(a, b) (((int32_t)(a)-(int32_t)(b)) > 0)
+#define max_32b(a,b) (less_or_equal_32b((a), (b)) ? (b) : (a))
+#define min_32b(a,b) (less_or_equal_32b((a), (b)) ? (a) : (b))
 
 // format of standard tcp header 
 struct tcphdr {

@@ -32,18 +32,14 @@ static inline void tcp_update_window_safe(struct tcp_sock *tsk, struct tcp_cb *c
 
 void handle_tcp_data(struct tcp_sock *tsk, struct tcp_cb *cb)
 {
+	if(!cb->pl_len) return;
 	pthread_mutex_lock(&tsk->wait_recv->lock);
-	if(!cb->pl_len) goto DONE;
 	if(ring_buffer_free(tsk->rcv_buf) < cb->pl_len)
 		log(DEBUG,"RECV BUFFER FULL. DROPED.");
 	else{
 		write_ring_buffer(tsk->rcv_buf,cb->payload,cb->pl_len);
-		//if(cb->pl_len>0)
-			//tcp_send_control_packet(tsk,TCP_ACK);
 		wake_with_lock(tsk->wait_recv);
 	}
-	
-DONE:
 	pthread_mutex_unlock(&tsk->wait_recv->lock);
 }
 
@@ -77,6 +73,10 @@ static inline int is_tcp_seq_valid(struct tcp_sock *tsk, struct tcp_cb *cb)
 	}
 	if (!less_than_32b(cb->seq, rcv_end)) {
 		log(ERROR, "INVALID SEQ.");
+		return 0;
+	}
+	if (!less_or_equal_32b(cb->seq_end, rcv_end)) {
+		log(ERROR, "PKT TOO BIG. DROP.");
 		return 0;
 	}
 	return 1;
