@@ -84,13 +84,13 @@ if __name__ == '__main__':
         print(h3.cmd('ping -c 4 10.0.0.2'))
     elif mode==2:
         
-        print(h1.cmd('iperf -s > out1 &'))
+        print(h1.cmd('iperf -s > out1.txt &'))
         print(h2.cmd('iperf -c 10.0.0.1 -t 30 &'))
         print(h3.cmd('iperf -c 10.0.0.1 -t 30'))
         
         print('test h1 to h2 and h3:')
-        print(h3.cmd('iperf > out3 -s &'))
-        print(h2.cmd('iperf > out2 -s &'))
+        print(h3.cmd('iperf > out3.txt -s &'))
+        print(h2.cmd('iperf > out2.txt -s &'))
         print(h1.cmd('iperf -c 10.0.0.3 -t 40 & iperf -c 10.0.0.2 -t 40'))
 
     
@@ -99,10 +99,10 @@ if __name__ == '__main__':
     
     if mode==2:
         print('test h2 h3 to h1:')
-        os.system('cat out1')
+        os.system('cat out1.txt')
         print('test h1 to h2 and h3:')
-        os.system('cat out2')
-        os.system('cat out3')
+        os.system('cat out2.txt')
+        os.system('cat out3.txt')
     s1.cmd('kill %'+hub)
     '''
     CLI(net)

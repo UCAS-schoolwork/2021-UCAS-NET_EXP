@@ -5,7 +5,7 @@ all: $(TARGET) cleano
 CC = gcc
 LD = gcc
 
-CFLAGS = -g -Iinclude
+CFLAGS = -g -Og -Iinclude
 LDFLAGS = -L. 
 
 LIBS = -lipstack -lpthread

@@ -82,7 +82,7 @@ struct tcp_sock *alloc_tcp_sock()
 void free_tcp_sock(struct tcp_sock *tsk)
 {
 	//fprintf(stdout, "TODO: implement %s please.\n", __FUNCTION__);
-	if(--tsk->ref_cnt<=0){
+	if(--tsk->ref_cnt<0){
 		if(!list_empty(&tsk->list)) log(ERROR, "free_tcp list.");
 		// TODO: empty the queue, free child socks
 		if(!list_empty(&tsk->listen_queue)) log(ERROR, "free_tcp listen_queue.");
@@ -358,12 +358,12 @@ struct tcp_sock *tcp_sock_accept(struct tcp_sock *tsk)
 void tcp_sock_close(struct tcp_sock *tsk)
 {
 	//fprintf(stdout, "TODO: implement %s please.\n", __FUNCTION__);
-	/*
+	
 	if(tsk->state == TCP_CLOSED || tsk->state == TCP_LAST_ACK){
 		free_tcp_sock(tsk);
 		return;
 	}
-	*/
+	
 	if(tsk->state == TCP_ESTABLISHED){
 		tsk->state = TCP_FIN_WAIT_1;
 		tcp_send_control_packet(tsk, TCP_FIN|TCP_ACK);

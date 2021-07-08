@@ -1,0 +1,7 @@
+.vscode
+**/*.txt
+**/*.pyc
+**/test.*
+**/*.out
+**/*.dat
+**/*.html*

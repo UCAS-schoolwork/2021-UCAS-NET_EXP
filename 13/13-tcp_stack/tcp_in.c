@@ -32,14 +32,18 @@ static inline void tcp_update_window_safe(struct tcp_sock *tsk, struct tcp_cb *c
 // window
 static inline int is_tcp_seq_valid(struct tcp_sock *tsk, struct tcp_cb *cb)
 {
-	u32 rcv_end = tsk->rcv_nxt + max(tsk->rcv_wnd, 1);
-	if (less_than_32b(cb->seq, rcv_end) && less_or_equal_32b(tsk->rcv_nxt, cb->seq_end)) {
-		return 1;
-	}
-	else {
-		log(ERROR, "received packet with invalid seq, drop it.");
+	if(tsk->state==TCP_LISTEN) return 1;
+	if(tsk->state==TCP_SYN_SENT || tsk->state == TCP_LAST_ACK) {
+		if(cb->ack == tsk->snd_nxt) return 1;
 		return 0;
 	}
+	u32 rcv_end = tsk->rcv_nxt + max(tsk->rcv_wnd, 1);
+	// recvd < seq_end && seq < exp_end
+	if (less_than_32b(cb->seq, rcv_end) && less_or_equal_32b(tsk->rcv_nxt, cb->seq_end)) 
+		return 1;
+	log(ERROR, "received packet with invalid seq, drop it.");
+	return 0;
+	
 }
 
 static inline int update_tsk(struct tcp_sock *tsk, struct tcp_cb *cb)
@@ -55,6 +59,8 @@ void tcp_process(struct tcp_sock *tsk, struct tcp_cb *cb, char *packet)
 	// TODO: check if the packet is valid.
 	if(!tsk) return;
 	struct tcphdr *thr = packet_to_tcp_hdr(packet);
+	if(!is_tcp_seq_valid(tsk,cb)) return;
+	update_tsk(tsk,cb);
 	if(thr->flags & TCP_RST){
 		tsk->state = TCP_CLOSED;
 		tcp_unhash(tsk);
@@ -76,7 +82,6 @@ void tcp_process(struct tcp_sock *tsk, struct tcp_cb *cb, char *packet)
 		tcp_send_control_packet(csk,TCP_SYN|TCP_ACK);
 	}
 	else if(tsk->state == TCP_SYN_SENT && thr->flags & (TCP_ACK|TCP_SYN)){
-		update_tsk(tsk,cb);
 		tsk->state = TCP_ESTABLISHED;
 		tcp_send_control_packet(tsk,TCP_ACK);
 		wake_up(tsk->wait_connect);
@@ -86,7 +91,6 @@ void tcp_process(struct tcp_sock *tsk, struct tcp_cb *cb, char *packet)
 		pthread_mutex_lock(&psk->wait_accept->lock);
 		if(!tcp_sock_accept_queue_full(psk)){
 			tsk->state = TCP_ESTABLISHED;
-			update_tsk(tsk,cb);
 			tcp_sock_accept_enqueue(tsk);
 			wake_with_lock(psk->wait_accept);
 		}
@@ -94,26 +98,22 @@ void tcp_process(struct tcp_sock *tsk, struct tcp_cb *cb, char *packet)
 	}
 	else if(tsk->state == TCP_ESTABLISHED && thr->flags & TCP_FIN){
 		tsk->state = TCP_CLOSE_WAIT;
-		update_tsk(tsk,cb);
 		tcp_send_control_packet(tsk,TCP_ACK);
-		//usleep(100000);
-		//tcp_sock_close(tsk);
+		usleep(100000);
+		tcp_sock_close(tsk);
 	}
 	else if(tsk->state == TCP_FIN_WAIT_1 && thr->flags & TCP_ACK){
 		tsk->state = TCP_FIN_WAIT_2;
 		if(thr->flags & TCP_FIN)
 			tsk->state = TCP_TIME_WAIT;
-		update_tsk(tsk,cb);
 	}
 	else if(tsk->state == TCP_FIN_WAIT_2 && thr->flags & (TCP_FIN|TCP_ACK)){
 		tsk->state = TCP_TIME_WAIT;
-		update_tsk(tsk,cb);
 		tcp_send_control_packet(tsk,TCP_ACK);
 		tcp_set_timewait_timer(tsk);
 	}
 	else if(tsk->state == TCP_LAST_ACK && thr->flags & (TCP_ACK)){
 		tsk->state = TCP_CLOSED;
-		update_tsk(tsk,cb);
 		tcp_unhash(tsk);
 	}
 

@@ -1,0 +1,12 @@
+--2021-04-25 00:01:54--  http://10.0.0.2/1MB.dat
+Connecting to 10.0.0.2:80... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1048576 (1.0M) [application/octet-stream]
+Saving to: ‘1MB.dat.1’
+
+1MB.dat.1             4%[                    ]  43.65K   109KB/s               1MB.dat.1             9%[>                   ]  98.83K   164KB/s               1MB.dat.1            20%[===>                ] 214.78K   267KB/s               1MB.dat.1            36%[======>             ] 375.98K   449KB/s    in 0.8s    
+
+2021-04-25 00:01:55 (449 KB/s) - Connection closed at byte 385008. Retrying.
+
+--2021-04-25 00:01:56--  (try: 2)  http://10.0.0.2/1MB.dat
+Connecting to 10.0.0.2:80... failed: Network is unreachable.
